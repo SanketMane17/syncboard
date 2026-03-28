@@ -153,7 +153,7 @@ export function BoardShell() {
       </header>
 
       {/* ── Board ───────────────────────────────────────────────────────── */}
-      <main className="flex flex-1 gap-4 justify-center overflow-x-auto p-6 flex-wrap">
+      <main className="flex flex-1 justify-center gap-4 overflow-x-auto p-6 flex-wrap lg:flex-nowrap">
         <DndContext
           sensors={sensors}
           collisionDetection={closestCorners}

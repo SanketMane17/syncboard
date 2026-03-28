@@ -54,7 +54,7 @@ export function KanbanColumn({ column }: Props) {
 
   return (
     <>
-      <div className="flex sm:w-[300px] w-full shrink-0 flex-col rounded-column border border-[#e8e7ed] bg-white shadow-sm">
+      <div className="flex flex-1 min-w-[280px] max-w-[350px] shrink-0 flex-col rounded-column border border-[#e8e7ed] bg-white shadow-sm">
         {/* Column header */}
         <div className="flex items-center justify-between px-4 pt-4 pb-3">
           <h2 className="text-[14px] font-semibold text-[#1a1a2e]">{column.title}</h2>
@@ -86,13 +86,13 @@ export function KanbanColumn({ column }: Props) {
           </div>
         </SortableContext>
 
-        {/* Add task button */}
+        <div className='flex items-end justify-end'>{/* Add task button */}
         <button
           onClick={() => setShowModal(true)}
-          className="mx-3 mb-3 mt-1 flex items-center justify-center rounded-xl border border-dashed border-gray-200 py-2 text-[13px] text-[#c0bfca] transition-colors hover:border-gray-300 hover:bg-gray-50 hover:text-[#9999aa]"
+          className="mx-3 mb-3 mt-1 flex w-12 h-12 items-center justify-center rounded-xl border border-dashed border-gray-200 text-[13px] text-[#c0bfca] transition-colors hover:border-gray-300 hover:bg-gray-50 hover:text-[#9999aa]"
         >
-          <span className="mr-1.5 text-base leading-none">+</span>
-        </button>
+          <span className="text-base leading-none">+</span>
+        </button></div>
       </div>
 
       {showModal && (
