@@ -1,15 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { api } from '@/lib/api';
+import { cn } from '@/lib/utils';
+import type { Column, Priority } from '@/types';
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { cn } from '@/lib/utils';
-import { TaskCard } from './TaskCard';
-import { AddTaskModal } from './AddTaskModal';
-import { api } from '@/lib/api';
-import { useBoardStore } from '@/store/board.store';
+import { useState } from 'react';
 import { toast } from 'sonner';
-import type { Column, Priority } from '@/types';
+import { AddTaskModal } from './AddTaskModal';
+import { TaskCard } from './TaskCard';
 
 interface Props {
   column: Column;
@@ -17,7 +16,6 @@ interface Props {
 
 export function KanbanColumn({ column }: Props) {
   const [showModal, setShowModal] = useState(false);
-  const { applyRemoteCreate } = useBoardStore();
 
   const { setNodeRef, isOver } = useDroppable({
     id: column.id,
@@ -45,7 +43,7 @@ export function KanbanColumn({ column }: Props) {
 
       // Optimistically add to our own store
       // (server will also broadcast to other clients via WS)
-      applyRemoteCreate({ task: task as Parameters<typeof applyRemoteCreate>[0]['task'] });
+      // applyRemoteCreate({ task: task as Parameters<typeof applyRemoteCreate>[0]['task'] });
       toast.success(`"${data.title}" added to ${column.title}`);
     } catch (e) {
       toast.error(`Failed to create task: ${(e as Error).message}`);
