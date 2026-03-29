@@ -95,27 +95,22 @@ export const useBoardStore = create<BoardState>((set, get) => ({
   },
 
   rollback: (snapshot) => {
-    set((state) => {
-      if (!state.board) return state;
-
-      const restoredColumns = state.board.columns.map((col): Column => ({
-        ...col,
-        tasks: col.tasks
-          .map((t) => snapshot[t.id] ?? t)
-          .concat(
-            // Re-add tasks that were removed from this column during the optimistic update
-            Object.values(snapshot).filter(
-              (t) =>
-                t.column_id === col.id &&
-                !col.tasks.find((ct) => ct.id === t.id),
-            ),
-          )
-          .sort((a, b) => a.position - b.position),
-      }));
-
-      return { board: { ...state.board!, columns: restoredColumns } };
-    });
-  },
+      set((state) => {
+        if (!state.board) return state;
+  
+        // Ignore current (optimistically mutated) task positions entirely.
+        // Rebuild each column's task list purely from the snapshot — this is
+        // the only safe way to avoid tasks appearing in two columns at once.
+        const restoredColumns = state.board.columns.map((col): Column => ({
+          ...col,
+          tasks: Object.values(snapshot)
+            .filter((t) => t.column_id === col.id)
+            .sort((a, b) => a.position - b.position),
+        }));
+  
+        return { board: { ...state.board!, columns: restoredColumns } };
+      });
+    },
 
   applyRemoteMove: (payload) => {
     const { taskId, toColumnId, position, updatedAt } = payload;
