@@ -144,6 +144,55 @@ syncboard/
 
 ---
 
+## Database Schema
+
+Three tables with a clean parent-child hierarchy: `boards` owns `columns`, `columns` own `tasks`. Every relationship uses `ON DELETE CASCADE` so removing a board cleans up everything beneath it automatically.
+
+```sql
+boards
+- id          UUID  PK
+- name        TEXT
+- created_at  TIMESTAMPTZ
+
+columns
+- id          TEXT  PK          -- readable slug: 'backlog', 'todo', 'inprogress', 'done'
+- board_id    UUID  FK boards
+- title       TEXT
+- position    INTEGER           -- column order on the board
+- created_at  TIMESTAMPTZ
+
+tasks
+- id                UUID  PK
+- column_id         TEXT  FK columns
+- title             TEXT  CHECK (length <= 100)
+- description       TEXT  nullable
+- priority          TEXT  CHECK IN ('low', 'medium', 'high')
+- assignee_initials TEXT
+- assignee_color    TEXT
+- position          INTEGER     -- card order within its column
+- created_at        TIMESTAMPTZ
+- updated_at        TIMESTAMPTZ -- optimistic concurrency token
+
+-- Indexes
+idx_tasks_column_id         ON tasks(column_id)
+idx_tasks_position          ON tasks(column_id, position)
+idx_columns_board           ON columns(board_id, position)
+```
+
+### Why this shape?
+
+**`position` on both `columns` and `tasks`.** This is the most important design call. Without an explicit integer for order, the only fallback is `created_at` — which breaks the moment a user reorders cards. Every drag-and-drop move updates `position` on the affected tasks, and the API always returns tasks sorted by `(column_id, position ASC)`.
+
+**`updated_at` as a concurrency token.** When two users drag the same card at the same time, the server checks whether the task's `updated_at` matches what the client sent. If it doesn't match, someone else moved it after the client's snapshot was taken, and the server returns a `409 CONFLICT` instead of silently overwriting. The client then rolls back and shows an error.
+
+**`columns.id` is a readable TEXT slug, not a UUID.** The four columns (`backlog`, `todo`, `inprogress`, `done`) are fixed for this app. Using a slug as the PK means the frontend TypeScript type `ColumnId = 'backlog' | 'todo' | 'inprogress' | 'done'` maps directly to what's in the DB — no join or lookup needed to go from a drag event to a column ID.
+
+**CHECK constraints instead of an enum type.** `priority TEXT CHECK (priority IN ('low', 'medium', 'high'))` is simpler to migrate than a Postgres `ENUM` — adding a new priority value is an `ALTER TABLE` with no type drop/recreate cycle.
+
+**`ON DELETE CASCADE` throughout.** Board deleted? Columns and all their tasks go with it in one statement. No orphaned rows, no manual cleanup in application code.
+
+---
+
 ## API Reference
 
 | Method   | Path                  | Description                                    |
